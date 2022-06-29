@@ -137,68 +137,88 @@ impl State for Game {
         let mut player_id = entities.len();
         player_id -= 1;
         if window.keyboard()[Key::Left] == Pressed {
+            self.dungeon = dungeon::monster_map(self.dungeon);
             if self.dungeon.move_character('x', 1000) {
                 entities[player_id].pos.x -= 1.0;
                 self.dungeon.player.position_y -= 1;
 
-                let monster_moves = self.dungeon.determine_monster_move();
+                for i in 0..(entities.len() -1) {
+                    let moves = self.dungeon.determine_monster_move(i);
+                    self.dungeon.monsters[i].pos_x = moves.0;
+                    self.dungeon.monsters[i].pos_y = moves.1;
+                    entities[i].pos.x = moves.1 as f32;
+                    entities[i].pos.y = moves.0 as f32;
 
-                for i in 0..monster_moves.len() {
-                    self.dungeon.monsters[i].pos_x = monster_moves[i].1;
-                    self.dungeon.monsters[i].pos_y = monster_moves[i].0;
-                    entities[i].pos.x = monster_moves[i].0 as f32;
-                    entities[i].pos.y = monster_moves[i].1 as f32;
+                    self.dungeon = dungeon::monster_map(self.dungeon);
                 }
+
+                // let monster_moves = self.dungeon.determine_monster_move();
+
+                // for i in 0..monster_moves.len() {
+                //     self.dungeon.monsters[i].pos_x = monster_moves[i].1;
+                //     self.dungeon.monsters[i].pos_y = monster_moves[i].0;
+                //     entities[i].pos.x = monster_moves[i].0 as f32;
+                //     entities[i].pos.y = monster_moves[i].1 as f32;
+                // }
 
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
             }
         }
         if window.keyboard()[Key::Right] == Pressed {
+            self.dungeon = dungeon::monster_map(self.dungeon);
             if self.dungeon.move_character('x', 1) {
                 self.dungeon.player.position_y += 1;
                 entities[player_id].pos.x += 1.0;
 
-                let monster_moves = self.dungeon.determine_monster_move();
+                for i in 0..(entities.len() -1) {
+                    let moves = self.dungeon.determine_monster_move(i);
+                    self.dungeon.monsters[i].pos_x = moves.0;
+                    self.dungeon.monsters[i].pos_y = moves.1;
+                    entities[i].pos.x = moves.1 as f32;
+                    entities[i].pos.y = moves.0 as f32;
 
-                for i in 0..monster_moves.len() {
-                    self.dungeon.monsters[i].pos_x = monster_moves[i].1;
-                    self.dungeon.monsters[i].pos_y = monster_moves[i].0;
-                    entities[i].pos.x = monster_moves[i].0 as f32;
-                    entities[i].pos.y = monster_moves[i].1 as f32;
+                    self.dungeon = dungeon::monster_map(self.dungeon);
                 }
+
+                
 
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
             }
         }
         if window.keyboard()[Key::Up] == Pressed {
+            self.dungeon = dungeon::monster_map(self.dungeon);
             if self.dungeon.move_character('y', 1000) {
                 self.dungeon.player.position_x -= 1;
                 entities[player_id].pos.y -= 1.0;
 
-                let monster_moves = self.dungeon.determine_monster_move();
+                for i in 0..(entities.len() -1) {
+                    let moves = self.dungeon.determine_monster_move(i);
+                    self.dungeon.monsters[i].pos_x = moves.0;
+                    self.dungeon.monsters[i].pos_y = moves.1;
+                    entities[i].pos.x = moves.1 as f32;
+                    entities[i].pos.y = moves.0 as f32;
 
-                for i in 0..monster_moves.len() {
-                    self.dungeon.monsters[i].pos_x = monster_moves[i].1;
-                    self.dungeon.monsters[i].pos_y = monster_moves[i].0;
-                    entities[i].pos.x = monster_moves[i].0 as f32;
-                    entities[i].pos.y = monster_moves[i].1 as f32;
+                    self.dungeon = dungeon::monster_map(self.dungeon);
                 }
+
 
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
             }
         }
         if window.keyboard()[Key::Down] == Pressed {
+            self.dungeon = dungeon::monster_map(self.dungeon);
             if self.dungeon.move_character('y', 1) {
                 self.dungeon.player.position_x += 1;
                 entities[player_id].pos.y += 1.0;
 
-                let monster_moves = self.dungeon.determine_monster_move();
+                for i in 0..(entities.len() -1) {
+                    let moves = self.dungeon.determine_monster_move(i);
+                    self.dungeon.monsters[i].pos_x = moves.0;
+                    self.dungeon.monsters[i].pos_y = moves.1;
+                    entities[i].pos.x = moves.1 as f32;
+                    entities[i].pos.y = moves.0 as f32;
 
-                for i in 0..monster_moves.len() {
-                    self.dungeon.monsters[i].pos_x = monster_moves[i].1;
-                    self.dungeon.monsters[i].pos_y = monster_moves[i].0;
-                    entities[i].pos.x = monster_moves[i].0 as f32;
-                    entities[i].pos.y = monster_moves[i].1 as f32;
+                    self.dungeon = dungeon::monster_map(self.dungeon);
                 }
 
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);

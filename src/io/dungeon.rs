@@ -57,21 +57,25 @@ impl Dungeon {
     pub fn move_character(self, direction: char, value: usize) -> bool {
         if direction == 'x' {
             if value == 1000 {
-                if self.hardness_map[self.player.position_x][self.player.position_y - 1] > 2 {
+                if self.hardness_map[self.player.position_x][self.player.position_y - 1] > 2 || 
+                    self.mon_map[self.player.position_x][self.player.position_y - 1]{
                     return false;
                 }
             } else {
-                if self.hardness_map[self.player.position_x][self.player.position_y + 1] > 2 {
+                if self.hardness_map[self.player.position_x][self.player.position_y + 1] > 2 ||
+                self.mon_map[self.player.position_x][self.player.position_y + 1]{
                     return false;
                 }
             }
         } else {
             if value == 1000 {
-                if self.hardness_map[self.player.position_x - 1][self.player.position_y] > 2 {
+                if self.hardness_map[self.player.position_x - 1][self.player.position_y] > 2 ||
+                self.mon_map[self.player.position_x -1][self.player.position_y]{
                     return false;
                 }
             } else {
-                if self.hardness_map[self.player.position_x + 1][self.player.position_y] > 2 {
+                if self.hardness_map[self.player.position_x + 1][self.player.position_y] > 2 ||
+                self.mon_map[self.player.position_x + 1][self.player.position_y]{
                     return false;
                 }
             }
@@ -79,39 +83,24 @@ impl Dungeon {
 
         true
     }
-    pub fn determine_monster_move(mut self) -> Vec<(usize, usize)> {
-        let mut x_min;
-        let mut y_min;
-        let mut return_vec: Vec<(usize, usize)> = Vec::new();
-
-        for i in 0..self.monsters.len() {
-            let x = self.monsters[i].pos_x;
-            let y = self.monsters[i].pos_y;
-            x_min = 0;
-            y_min = 0;
-            self = monster_map(self);
-            if x - 1 > 0 && x + 1 < self.dungeon_x && y - 1 > 0 && y + 1 < self.dungeon_y {
-                let mut min = 10000;
-
-                for x1 in (x - 1)..(x + 2) {
-                    for y1 in (y - 1)..(y + 2) {
-                        if !self.mon_map[x1][y1] {
-                            if self.distance_map[x1][y1] < min {
-                                min = self.distance_map[x1][y1];
-                                x_min = x1;
-                                y_min = y1;
-                            }
-                        }
+    pub fn determine_monster_move(self, monster : usize) -> (usize, usize) {
+        let posx = self.monsters[monster].pos_x;
+        let posy = self.monsters[monster].pos_y;
+        let mut x_min : usize = 0; 
+        let mut y_min :usize = 0;
+        let mut min = 10000;
+        for x in (posx-1)..(posx+2) {
+            for y in (posy -1)..(posy + 2) {
+                if !self.mon_map[x][y] {
+                    if self.distance_map[x][y] < min {
+                        min = self.distance_map[x][y];
+                        x_min = x;
+                        y_min = y;
                     }
                 }
-                if x_min != 0 && y_min != 0 {
-                    return_vec.push((y_min, x_min));
-                } else {
-                    return_vec.push((y, x));
-                }
-            }
+            } 
         }
-        return_vec
+        (x_min, y_min)
     }
 }
 
@@ -330,5 +319,6 @@ pub fn monster_map(mut d: Dungeon) -> Dungeon {
     for mon in 0..d.monsters.len() {
         d.mon_map[d.monsters[mon].pos_x][d.monsters[mon].pos_y] = true;
     }
+    d.mon_map[d.player.position_x][d.player.position_y] = true;
     d
 }
