@@ -5,6 +5,7 @@ pub mod player;
 use crate::dungeon::monster::*;
 use crate::dungeon::player::Player;
 use colored::Colorize;
+use quicksilver::prelude::Color;
 
 #[derive(Copy, Clone)]
 pub struct Dungeon {
@@ -57,25 +58,29 @@ impl Dungeon {
     pub fn move_character(self, direction: char, value: usize) -> bool {
         if direction == 'x' {
             if value == 1000 {
-                if self.hardness_map[self.player.position_x][self.player.position_y - 1] > 2 || 
-                    self.mon_map[self.player.position_x][self.player.position_y - 1]{
+                if self.hardness_map[self.player.position_x][self.player.position_y - 1] > 2
+                    || self.mon_map[self.player.position_x][self.player.position_y - 1]
+                {
                     return false;
                 }
             } else {
-                if self.hardness_map[self.player.position_x][self.player.position_y + 1] > 2 ||
-                self.mon_map[self.player.position_x][self.player.position_y + 1]{
+                if self.hardness_map[self.player.position_x][self.player.position_y + 1] > 2
+                    || self.mon_map[self.player.position_x][self.player.position_y + 1]
+                {
                     return false;
                 }
             }
         } else {
             if value == 1000 {
-                if self.hardness_map[self.player.position_x - 1][self.player.position_y] > 2 ||
-                self.mon_map[self.player.position_x -1][self.player.position_y]{
+                if self.hardness_map[self.player.position_x - 1][self.player.position_y] > 2
+                    || self.mon_map[self.player.position_x - 1][self.player.position_y]
+                {
                     return false;
                 }
             } else {
-                if self.hardness_map[self.player.position_x + 1][self.player.position_y] > 2 ||
-                self.mon_map[self.player.position_x + 1][self.player.position_y]{
+                if self.hardness_map[self.player.position_x + 1][self.player.position_y] > 2
+                    || self.mon_map[self.player.position_x + 1][self.player.position_y]
+                {
                     return false;
                 }
             }
@@ -83,14 +88,14 @@ impl Dungeon {
 
         true
     }
-    pub fn determine_monster_move(self, monster : usize) -> (usize, usize) {
+    pub fn determine_monster_move(self, monster: usize) -> (usize, usize) {
         let posx = self.monsters[monster].pos_x;
         let posy = self.monsters[monster].pos_y;
-        let mut x_min : usize = 0; 
-        let mut y_min :usize = 0;
+        let mut x_min: usize = 0;
+        let mut y_min: usize = 0;
         let mut min = 10000;
-        for x in (posx-1)..(posx+2) {
-            for y in (posy -1)..(posy + 2) {
+        for x in (posx - 1)..(posx + 2) {
+            for y in (posy - 1)..(posy + 2) {
                 if !self.mon_map[x][y] {
                     if self.distance_map[x][y] < min {
                         min = self.distance_map[x][y];
@@ -98,7 +103,7 @@ impl Dungeon {
                         y_min = y;
                     }
                 }
-            } 
+            }
         }
         (x_min, y_min)
     }
@@ -118,6 +123,12 @@ pub fn generate_dungeon() -> Dungeon {
             character: '@',
             position_x: 1000,
             position_y: 1000,
+            hp: 100,
+            max_hp: 100,
+            attack: 10,
+            defence: 10,
+            alive: true,
+            color: Color::RED,
         },
         hardness_map: [[255; 80]; 30],
         distance_map: [[0; 80]; 30],
@@ -128,6 +139,10 @@ pub fn generate_dungeon() -> Dungeon {
             pos_y: 100,
             hp: 10,
             max_hp: 10,
+            attack: 1,
+            defence: 1,
+            alive: true,
+            color: Color::BLUE
         }; 10],
     };
 
@@ -317,7 +332,9 @@ pub fn monster_map(mut d: Dungeon) -> Dungeon {
     }
 
     for mon in 0..d.monsters.len() {
-        d.mon_map[d.monsters[mon].pos_x][d.monsters[mon].pos_y] = true;
+        if d.monsters[mon].alive {
+            d.mon_map[d.monsters[mon].pos_x][d.monsters[mon].pos_y] = true;
+        }
     }
     d.mon_map[d.player.position_x][d.player.position_y] = true;
     d

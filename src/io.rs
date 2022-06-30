@@ -31,36 +31,10 @@ fn generate_map(d: Dungeon) -> Vec<Tile> {
     map
 }
 
-#[derive(Clone, Debug, PartialEq)]
-struct Entity {
-    pos: Vector,
-    glyph: char,
-    color: Color,
-    hp: i32,
-    max_hp: i32,
-}
-
-fn generate_entities(d: Dungeon) -> Vec<Entity> {
-    let mut vec: Vec<Entity> = Vec::new();
-    for i in 0..d.monsters.len() {
-        let ent = Entity {
-            pos: Vector::new(d.monsters[i].pos_y as i32, d.monsters[i].pos_x as i32),
-            glyph: d.monsters[i].character,
-            color: Color::RED,
-            hp: d.monsters[i].hp,
-            max_hp: d.monsters[i].max_hp,
-        };
-        vec.push(ent);
-    }
-
-    vec
-}
-
 pub struct Game {
     title: Asset<Image>,
     inventory: Asset<Image>,
     map: Vec<Tile>,
-    entities: Vec<Entity>,
     tileset: Asset<HashMap<char, Image>>,
     tile_size_px: Vector,
     dungeon: Dungeon,
@@ -86,19 +60,6 @@ impl State for Game {
             )
         }));
         let map = generate_map(dungeon);
-        let mut entities = generate_entities(dungeon);
-
-        // Generate Player
-        entities.push(Entity {
-            pos: Vector::new(
-                dungeon.player.position_y as i32,
-                dungeon.player.position_x as i32,
-            ),
-            glyph: '@',
-            color: Color::BLUE,
-            hp: 3,
-            max_hp: 5,
-        });
 
         // The Square font: http://strlen.com/square/?s[]=font
         // License: CC BY 3.0 https://creativecommons.org/licenses/by/3.0/deed.en_US
@@ -122,7 +83,6 @@ impl State for Game {
             title,
             inventory,
             map,
-            entities,
             tileset,
             tile_size_px,
             dungeon,
@@ -133,95 +93,128 @@ impl State for Game {
     fn update(&mut self, window: &mut Window) -> Result<()> {
         use ButtonState::*;
 
-        let entities = &mut self.entities;
-        let mut player_id = entities.len();
-        player_id -= 1;
         if window.keyboard()[Key::Left] == Pressed {
             self.dungeon = dungeon::monster_map(self.dungeon);
             if self.dungeon.move_character('x', 1000) {
-                entities[player_id].pos.x -= 1.0;
                 self.dungeon.player.position_y -= 1;
 
-                for i in 0..(entities.len() -1) {
+                for i in 0..(self.dungeon.monsters.len()) {
                     let moves = self.dungeon.determine_monster_move(i);
                     self.dungeon.monsters[i].pos_x = moves.0;
                     self.dungeon.monsters[i].pos_y = moves.1;
-                    entities[i].pos.x = moves.1 as f32;
-                    entities[i].pos.y = moves.0 as f32;
 
                     self.dungeon = dungeon::monster_map(self.dungeon);
                 }
 
-                // let monster_moves = self.dungeon.determine_monster_move();
-
-                // for i in 0..monster_moves.len() {
-                //     self.dungeon.monsters[i].pos_x = monster_moves[i].1;
-                //     self.dungeon.monsters[i].pos_y = monster_moves[i].0;
-                //     entities[i].pos.x = monster_moves[i].0 as f32;
-                //     entities[i].pos.y = monster_moves[i].1 as f32;
-                // }
-
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
+            } else {
+                // Process Player Combat
+                let mut mon_id = 100;
+                let x: usize = self.dungeon.player.position_x;
+                let y: usize = self.dungeon.player.position_y - 1;
+                for i in 0..(self.dungeon.monsters.len()) {
+                    if self.dungeon.monsters[i].pos_x == x && self.dungeon.monsters[i].pos_y == y {
+                        mon_id = i;
+                        break;
+                    }
+                }
+                if mon_id != 100 {
+                    let hp_after_combat =
+                        self.dungeon.monsters[mon_id].process_combat(self.dungeon.player.attack);
+                    self.dungeon.monsters[mon_id].hp = hp_after_combat;
+                    if hp_after_combat <= 0 {
+                        println!("should you be dead");
+                        self.dungeon.monsters[mon_id].alive = false;
+                    }
+                }
             }
         }
         if window.keyboard()[Key::Right] == Pressed {
             self.dungeon = dungeon::monster_map(self.dungeon);
             if self.dungeon.move_character('x', 1) {
                 self.dungeon.player.position_y += 1;
-                entities[player_id].pos.x += 1.0;
 
-                for i in 0..(entities.len() -1) {
+                for i in 0..(self.dungeon.monsters.len()) {
                     let moves = self.dungeon.determine_monster_move(i);
                     self.dungeon.monsters[i].pos_x = moves.0;
                     self.dungeon.monsters[i].pos_y = moves.1;
-                    entities[i].pos.x = moves.1 as f32;
-                    entities[i].pos.y = moves.0 as f32;
-
                     self.dungeon = dungeon::monster_map(self.dungeon);
                 }
-
-                
-
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
+            } else {
+                // Process Player Combat
+                let mut mon_id = 100;
+                let x: usize = self.dungeon.player.position_x;
+                let y: usize = self.dungeon.player.position_y + 1;
+                for i in 0..(self.dungeon.monsters.len()) {
+                    if self.dungeon.monsters[i].pos_x == x && self.dungeon.monsters[i].pos_y == y {
+                        mon_id = i;
+                        break;
+                    }
+                }
+                if mon_id != 100 {
+                    let hp_after_combat =
+                        self.dungeon.monsters[mon_id].process_combat(self.dungeon.player.attack);
+                    self.dungeon.monsters[mon_id].hp = hp_after_combat;
+                    if hp_after_combat <= 0 {
+                        self.dungeon.monsters[mon_id].alive = false;
+                    }
+                }
             }
         }
         if window.keyboard()[Key::Up] == Pressed {
             self.dungeon = dungeon::monster_map(self.dungeon);
             if self.dungeon.move_character('y', 1000) {
                 self.dungeon.player.position_x -= 1;
-                entities[player_id].pos.y -= 1.0;
 
-                for i in 0..(entities.len() -1) {
+                for i in 0..(self.dungeon.monsters.len()) {
                     let moves = self.dungeon.determine_monster_move(i);
                     self.dungeon.monsters[i].pos_x = moves.0;
                     self.dungeon.monsters[i].pos_y = moves.1;
-                    entities[i].pos.x = moves.1 as f32;
-                    entities[i].pos.y = moves.0 as f32;
-
                     self.dungeon = dungeon::monster_map(self.dungeon);
                 }
 
-
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
+            } else {
+                // Process Player Combat
+                let mut mon_id = 100;
+                let x: usize = self.dungeon.player.position_x - 1;
+                let y: usize = self.dungeon.player.position_y;
+                for i in 0..(self.dungeon.monsters.len()) {
+                    if self.dungeon.monsters[i].pos_x == x && self.dungeon.monsters[i].pos_y == y {
+                        mon_id = i;
+                        break;
+                    }
+                }
+                if mon_id != 100 {
+                    let hp_after_combat =
+                        self.dungeon.monsters[mon_id].process_combat(self.dungeon.player.attack);
+                    self.dungeon.monsters[mon_id].hp = hp_after_combat;
+                    if hp_after_combat <= 0 {
+                        self.dungeon.monsters[mon_id].alive = false;
+                    }
+                }
             }
         }
         if window.keyboard()[Key::Down] == Pressed {
             self.dungeon = dungeon::monster_map(self.dungeon);
             if self.dungeon.move_character('y', 1) {
                 self.dungeon.player.position_x += 1;
-                entities[player_id].pos.y += 1.0;
 
-                for i in 0..(entities.len() -1) {
+                for i in 0..(self.dungeon.monsters.len()) {
                     let moves = self.dungeon.determine_monster_move(i);
                     self.dungeon.monsters[i].pos_x = moves.0;
                     self.dungeon.monsters[i].pos_y = moves.1;
-                    entities[i].pos.x = moves.1 as f32;
-                    entities[i].pos.y = moves.0 as f32;
 
                     self.dungeon = dungeon::monster_map(self.dungeon);
                 }
-
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
+            } else {
+                // Process Player Combat
+
+                // let y: usize = self.dungeon.player.position_x + 1;
+                // let x: usize = self.dungeon.player.position_y;
+                // self = process_combat(self, x as f32, y as f32);
             }
         }
         if window.keyboard()[Key::Escape].is_down() {
@@ -263,23 +256,37 @@ impl State for Game {
             Ok(())
         })?;
 
-        // Draw entities
-        let (tileset, entities) = (&mut self.tileset, &self.entities);
+        // Draw Entities Rewrite
+        let (tileset, d) = (&mut self.tileset, &self.dungeon);
         tileset.execute(|tileset| {
-            for entity in entities.iter() {
-                if let Some(image) = tileset.get(&entity.glyph) {
-                    let pos_px = offset_px + entity.pos.times(tile_size_px);
+            for i in 0..d.monsters.len() {
+                if let Some(image) = tileset.get(&d.monsters[i].character) {
+                    let mon_vector =
+                        Vector::new(d.monsters[i].pos_y as i32, d.monsters[i].pos_x as i32);
+                    let pos_px = offset_px + mon_vector.times(tile_size_px);
+                    if d.monsters[i].alive {
+                        window.draw(
+                            &Rectangle::new(pos_px, image.area().size()),
+                            Blended(&image, d.monsters[i].color),
+                        );
+                    }
+                }
+            }
+            if d.player.alive {
+                if let Some(image) = tileset.get(&d.player.character) {
+                    let player_vector =
+                        Vector::new(d.player.position_y as i32, d.player.position_x as i32);
+                    let pos_px = offset_px + player_vector.times(tile_size_px);
                     window.draw(
                         &Rectangle::new(pos_px, image.area().size()),
-                        Blended(&image, entity.color),
+                        Blended(&image, d.player.color),
                     );
                 }
             }
             Ok(())
         })?;
 
-        let player_id = self.entities.len() - 1;
-        let player = &self.entities[player_id];
+        let player = &self.dungeon.player;
         let full_health_width_px = 100.0;
         let current_health_width_px =
             (player.hp as f32 / player.max_hp as f32) * full_health_width_px;
