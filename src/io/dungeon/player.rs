@@ -10,6 +10,7 @@ pub struct Player {
     pub defence: i32,
     pub alive: bool,
     pub color: Color,
+    pub target: (usize, usize)
 }
 
 impl Player {

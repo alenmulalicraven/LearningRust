@@ -98,35 +98,14 @@ impl State for Game {
             if self.dungeon.move_character('x', 1000) {
                 self.dungeon.player.position_y -= 1;
 
-                for i in 0..(self.dungeon.monsters.len()) {
-                    let moves = self.dungeon.determine_monster_move(i);
-                    self.dungeon.monsters[i].pos_x = moves.0;
-                    self.dungeon.monsters[i].pos_y = moves.1;
-
-                    self.dungeon = dungeon::monster_map(self.dungeon);
-                }
-
+                self.dungeon = dungeon::process_monster_moves_attack(self.dungeon);
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
             } else {
-                // Process Player Combat
-                let mut mon_id = 100;
-                let x: usize = self.dungeon.player.position_x;
-                let y: usize = self.dungeon.player.position_y - 1;
-                for i in 0..(self.dungeon.monsters.len()) {
-                    if self.dungeon.monsters[i].pos_x == x && self.dungeon.monsters[i].pos_y == y {
-                        mon_id = i;
-                        break;
-                    }
-                }
-                if mon_id != 100 {
-                    let hp_after_combat =
-                        self.dungeon.monsters[mon_id].process_combat(self.dungeon.player.attack);
-                    self.dungeon.monsters[mon_id].hp = hp_after_combat;
-                    if hp_after_combat <= 0 {
-                        println!("should you be dead");
-                        self.dungeon.monsters[mon_id].alive = false;
-                    }
-                }
+                // Process Target Monster
+                self.dungeon.player = dungeon::process_target_monster(self.dungeon.player, 
+                    self.dungeon.player.position_x, 
+                    self.dungeon.player.position_y - 1);
+       
             }
         }
         if window.keyboard()[Key::Right] == Pressed {
@@ -134,32 +113,14 @@ impl State for Game {
             if self.dungeon.move_character('x', 1) {
                 self.dungeon.player.position_y += 1;
 
-                for i in 0..(self.dungeon.monsters.len()) {
-                    let moves = self.dungeon.determine_monster_move(i);
-                    self.dungeon.monsters[i].pos_x = moves.0;
-                    self.dungeon.monsters[i].pos_y = moves.1;
-                    self.dungeon = dungeon::monster_map(self.dungeon);
-                }
+                self.dungeon = dungeon::process_monster_moves_attack(self.dungeon);
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
             } else {
-                // Process Player Combat
-                let mut mon_id = 100;
-                let x: usize = self.dungeon.player.position_x;
-                let y: usize = self.dungeon.player.position_y + 1;
-                for i in 0..(self.dungeon.monsters.len()) {
-                    if self.dungeon.monsters[i].pos_x == x && self.dungeon.monsters[i].pos_y == y {
-                        mon_id = i;
-                        break;
-                    }
-                }
-                if mon_id != 100 {
-                    let hp_after_combat =
-                        self.dungeon.monsters[mon_id].process_combat(self.dungeon.player.attack);
-                    self.dungeon.monsters[mon_id].hp = hp_after_combat;
-                    if hp_after_combat <= 0 {
-                        self.dungeon.monsters[mon_id].alive = false;
-                    }
-                }
+                // Process Target Monster
+                self.dungeon.player = dungeon::process_target_monster(self.dungeon.player, 
+                    self.dungeon.player.position_x, 
+                    self.dungeon.player.position_y + 1);
+                
             }
         }
         if window.keyboard()[Key::Up] == Pressed {
@@ -167,33 +128,13 @@ impl State for Game {
             if self.dungeon.move_character('y', 1000) {
                 self.dungeon.player.position_x -= 1;
 
-                for i in 0..(self.dungeon.monsters.len()) {
-                    let moves = self.dungeon.determine_monster_move(i);
-                    self.dungeon.monsters[i].pos_x = moves.0;
-                    self.dungeon.monsters[i].pos_y = moves.1;
-                    self.dungeon = dungeon::monster_map(self.dungeon);
-                }
-
+                self.dungeon = dungeon::process_monster_moves_attack(self.dungeon);
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
             } else {
-                // Process Player Combat
-                let mut mon_id = 100;
-                let x: usize = self.dungeon.player.position_x - 1;
-                let y: usize = self.dungeon.player.position_y;
-                for i in 0..(self.dungeon.monsters.len()) {
-                    if self.dungeon.monsters[i].pos_x == x && self.dungeon.monsters[i].pos_y == y {
-                        mon_id = i;
-                        break;
-                    }
-                }
-                if mon_id != 100 {
-                    let hp_after_combat =
-                        self.dungeon.monsters[mon_id].process_combat(self.dungeon.player.attack);
-                    self.dungeon.monsters[mon_id].hp = hp_after_combat;
-                    if hp_after_combat <= 0 {
-                        self.dungeon.monsters[mon_id].alive = false;
-                    }
-                }
+                // Process Target Monster
+                self.dungeon.player = dungeon::process_target_monster(self.dungeon.player, 
+                    self.dungeon.player.position_x - 1, 
+                    self.dungeon.player.position_y);
             }
         }
         if window.keyboard()[Key::Down] == Pressed {
@@ -201,24 +142,23 @@ impl State for Game {
             if self.dungeon.move_character('y', 1) {
                 self.dungeon.player.position_x += 1;
 
-                for i in 0..(self.dungeon.monsters.len()) {
-                    let moves = self.dungeon.determine_monster_move(i);
-                    self.dungeon.monsters[i].pos_x = moves.0;
-                    self.dungeon.monsters[i].pos_y = moves.1;
-
-                    self.dungeon = dungeon::monster_map(self.dungeon);
-                }
+                self.dungeon = dungeon::process_monster_moves_attack(self.dungeon);
                 self.dungeon = dungeon::calculate_distance_map(self.dungeon);
             } else {
-                // Process Player Combat
-
-                // let y: usize = self.dungeon.player.position_x + 1;
-                // let x: usize = self.dungeon.player.position_y;
-                // self = process_combat(self, x as f32, y as f32);
+                // Process Target Monster
+                self.dungeon.player = dungeon::process_target_monster(self.dungeon.player, 
+                    self.dungeon.player.position_x + 1, 
+                    self.dungeon.player.position_y);
             }
         }
         if window.keyboard()[Key::Escape].is_down() {
             window.close();
+        }
+        if window.keyboard()[Key::A].is_down() {
+            let return_tup = dungeon::process_attack(self.dungeon);
+            if return_tup.2 {
+                self.dungeon.monsters[return_tup.1] = return_tup.0;
+            }
         }
         Ok(())
     }
@@ -256,7 +196,7 @@ impl State for Game {
             Ok(())
         })?;
 
-        // Draw Entities Rewrite
+        // Draw Monsters and PC 
         let (tileset, d) = (&mut self.tileset, &self.dungeon);
         tileset.execute(|tileset| {
             for i in 0..d.monsters.len() {

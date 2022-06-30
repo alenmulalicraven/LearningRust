@@ -129,6 +129,7 @@ pub fn generate_dungeon() -> Dungeon {
             defence: 10,
             alive: true,
             color: Color::RED,
+            target: (100, 100)
         },
         hardness_map: [[255; 80]; 30],
         distance_map: [[0; 80]; 30],
@@ -337,5 +338,47 @@ pub fn monster_map(mut d: Dungeon) -> Dungeon {
         }
     }
     d.mon_map[d.player.position_x][d.player.position_y] = true;
+    d
+}
+
+pub fn process_attack(mut d : Dungeon) -> (Monster, usize, bool) {
+    let x = d.player.target.0;
+    let y = d.player.target.1; 
+    let mut mon_id: usize = 100;
+    let mut attack_proccessed = false;
+    for i in 0..d.monsters.len() {
+        if d.monsters[i].pos_x == x && d.monsters[i].pos_y == y {
+            mon_id = i;
+        }
+    }
+    if mon_id != 100 {
+        let hp_after = d.monsters[mon_id].process_combat(d.player.attack); 
+        d.monsters[mon_id].hp = hp_after;
+        if d.monsters[mon_id].hp <= 0 {
+            d.monsters[mon_id].alive = false;
+        }
+        attack_proccessed = true;
+    } else {
+        return (d.monsters[0], mon_id, attack_proccessed); 
+    }
+    (d.monsters[mon_id], mon_id, attack_proccessed)
+}
+
+pub fn process_target_monster(mut p: Player, x : usize, y : usize) -> Player {
+    p.target = (x, y);
+    p
+}
+
+pub fn process_monster_moves_attack(mut d: Dungeon) -> Dungeon {
+    
+    for i in 0..d.monsters.len() {
+        let moves = d.determine_monster_move(i);
+        
+        d.monsters[i].pos_x = moves.0;
+        d.monsters[i].pos_y = moves.1;
+
+        d = monster_map(d);
+    }
+
     d
 }
